@@ -233,7 +233,8 @@ class Live:
             self.daily_summary(t, eq)
         self.last_t = t
         self.save()
-        with open(os.path.join(self.L.d, 'status.txt'), 'w') as f:
+        if not os.environ.get('NOSTATUS'):   # research harness: skip the human status file (pure I/O)
+          with open(os.path.join(self.L.d, 'status.txt'), 'w') as f:
             f.write(f'last step {t} UTC\nequity {eq:.2f} USDT\nopen trades: '
                     + (', '.join(f'{q.E} {q.coin}' for q in op) or 'none')
                     + f'\ncore: {self.ex.core_qty}\ntrend add-on: '
@@ -246,7 +247,8 @@ class Live:
     def emergency_check(self, t, eq, xmax=8.0, crash=0.45):
         """v3.4 catastrophe switches (never triggered in the 2022-2026 test of this code: worst 24h drop -37%,
         largest total exposure 6.35x equity). Either one closes EVERYTHING and halts the bot until you restart it by hand."""
-        h = [(a, b) for a, b in getattr(self, 'eq_hist', []) if a > t - pd.Timedelta('24h')] + [(t, eq)]
+        _cut = t - pd.Timedelta('24h')
+        h = [(a, b) for a, b in getattr(self, 'eq_hist', []) if a > _cut] + [(t, eq)]
         self.eq_hist = h
         hi = max(b for _, b in h); why = None
         if eq > 0 and eq < hi * (1 - crash):
