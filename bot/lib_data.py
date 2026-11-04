@@ -9,7 +9,11 @@ ADDON_EXTRA = ['HBAR', 'NEAR', 'SUI', 'WLD', 'ONDO', 'ENA']
 if os.environ.get('UNIV'):                      # research: point-in-time universe, comma list of 19 ranked coins
     _u = os.environ['UNIV'].split(',')
     _m = [c for c in _u[:13] if c not in ('BTC', 'ETH')]
-    P15 = ['BTC', 'ETH'] + _m[:8]; X1H = _m[8:11]; ADDON_EXTRA = _u[13:19]
+    if os.environ.get('ALL15'):                 # research: every coin on the 15-minute engines (top N), none 1h-only
+        _n = int(os.environ.get('UNIVN', '13')); _a = [c for c in _u[:_n] if c not in ('BTC', 'ETH')]
+        P15 = ['BTC', 'ETH'] + _a; X1H = []; ADDON_EXTRA = []
+    else:
+        P15 = ['BTC', 'ETH'] + _m[:8]; X1H = _m[8:11]; ADDON_EXTRA = _u[13:19]
 ALL13 = P15 + X1H   # v2.3 trend add-on only (1h feed)
 COLS = ['open', 'high', 'low', 'close', 'volume']
 START = pd.Timestamp('2019-01-01')

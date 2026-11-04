@@ -204,7 +204,8 @@ def crash_series(raws, feats, coins, tf):
         idx = raws[c].index
         b = br.reindex(idx)
         b1 = btc.reindex(idx, method='ffill')
-        cr = (b >= 3).values
+        _cf = __import__('os').environ.get('CRFRAC')                 # research: crash = this share of coins signalling (default 3 coins)
+        cr = (b >= (max(3, round(float(_cf) * len(coins))) if _cf else 3)).values
         if c != 'BTC':
             cr = cr | (b1 <= -0.05).values
         out[c] = pd.Series(cr, idx)

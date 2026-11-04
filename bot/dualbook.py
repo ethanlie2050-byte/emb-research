@@ -83,6 +83,7 @@ class DualBook(AddOnBook):
             lg = self.logic.other if kind == 'B' else self.logic.euph
             entries, exits = lg.step(bs, A4)
             if kind == 'E' and __import__('os').environ.get('NOEUPH'): entries = []   # research switch: euphoria off
+            if kind == 'B' and __import__('os').environ.get('CAPSZ') == '0': entries = []   # research switch: crash-buyer off
             work.append((kind, lg, entries, exits))
         self.b_last_bs = bs
         for kind, lg, entries, exits in work:
@@ -110,7 +111,7 @@ class DualBook(AddOnBook):
                 if side > 0 and c in shorts:
                     lg.release(e['tid'])
                     L.ev('breadth_entry_skipped_open_short', trade=e['tid'], coin=c); continue
-                frac = KIND[kind]['sizes'][c]; qty = frac * eq / px
+                frac = KIND[kind]['sizes'][c] * (float(__import__('os').environ.get('CAPSZ', '1')) if kind == 'B' else 1.0); qty = frac * eq / px   # research: CAPSZ scales crash-buyer size
                 L.p(f'{name} signal: {e["count"]} altcoins {word} 15%+ in 24h -> {verb} {c}')
                 L.ev(f'{ev}_entry', trade=e['tid'], coin=c, frac=frac, qty=qty, count=e['count'], side=side)
                 self.pos[e['tid']] = dict(coin=c, px=None, stop_oid=None, opened=str(t), side=side)
