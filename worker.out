@@ -1,0 +1,10 @@
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+calibration: DONE cal 2024-03-01 equity 14301.99 wall 10
+CALIBRATION OK
+cores: 2
+chunks done: 20 of 20
+remote: 
+remote: Create a pull request for 'results-w26' on GitHub by visiting:        
+remote:      https://github.com/ethanlie2050-byte/emb-research/pull/new/results-w26        
+remote: 
+PUSHED results-w26
