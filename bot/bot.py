@@ -13,6 +13,7 @@ STEP = pd.Timedelta('15min')
 DUR = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
 EO = {e: i for i, e in enumerate(['E1', 'E2', 'E3', 'E4', 'E5', 'RB1', 'RB5'])}
 G = {'E1', 'E2', 'E5'}
+SHORTE = {'E3'} | ({'E2'} if __import__('os').environ.get('SH2') else set())   # research: short engines skip long-exposure caps
 
 CFG = dict(
     kd=22.0, fd=0.35, kc=0.5, kmax=18,   # v3.3 at x22 (caps x1.1)
@@ -235,7 +236,7 @@ class Bot:
             nt = min(nt, (self.cfg['e3tot'] * eq - used) / (6 * atrp))
         import os as _o
         if getattr(self, '_pause', None) is not None and t_bar < self._pause: nt = 0.0   # research: PSTOP pause
-        if _o.environ.get('BEARX') and E != 'E3' and bool(self.reg.get(t_bar.normalize(), False)):
+        if _o.environ.get('BEARX') and E not in SHORTE and bool(self.reg.get(t_bar.normalize(), False)):
             nt *= float(_o.environ['BEARX'])                                     # research: shrink longs in a bear regime
         if _o.environ.get('DDT'):                                               # research: equity-drawdown brake x/y
             _x, _y = (float(v) for v in _o.environ['DDT'].split('/'))
@@ -246,26 +247,26 @@ class Bot:
         if _o.environ.get('VR') and c in VOLS:                                    # research: volatility limit
             v = VOLS[c].asof(t_bar.normalize())
             if v == v and v > 0: nt = min(nt, float(_o.environ['VR']) * eq / v)
-        if _o.environ.get('PCAP') and E != 'E3':        # research: total long exposure per coin (all engines) limit
+        if _o.environ.get('PCAP') and E not in SHORTE:        # research: total long exposure per coin (all engines) limit
             pm, pa = (float(x) for x in _o.environ['PCAP'].split('/'))
             ex = EXPO_FN() if EXPO_FN is not None else {}
             have = max(ex.get(c, 0.0), 0.0)
             for q in self.trades.values():
-                if q.coin == c and q.E != 'E3' and q.status in ('pending', 'open'):
+                if q.coin == c and q.E not in SHORTE and q.status in ('pending', 'open'):
                     have += q.nt * (1.0 if q.status == 'pending' or EXPO_FN is None else sum(lv['w'] for lv in q.levels if lv.get('fp') is None))
             nt = min(nt, max(0.0, (pm if c in ('BTC', 'ETH') else pa) * eq - have))
-        if _o.environ.get('TCAP') and E != 'E3':        # research: total long exposure (all coins, all engines) limit
+        if _o.environ.get('TCAP') and E not in SHORTE:        # research: total long exposure (all coins, all engines) limit
             ex = EXPO_FN() if EXPO_FN is not None else {}
             cur = sum(v for v in ex.values() if v > 0)
             for q in self.trades.values():
-                if q.status in ('pending', 'open') and q.E != 'E3':
+                if q.status in ('pending', 'open') and q.E not in SHORTE:
                     cur += q.nt * (1.0 if q.status == 'pending' or EXPO_FN is None else sum(lv['w'] for lv in q.levels if lv.get('fp') is None))
             nt = min(nt, max(0.0, float(_o.environ['TCAP']) * eq - cur))
-        if _o.environ.get('SB') and E != 'E3':          # stress budget: loss if a 10-Oct-2025-style crash hit right now
+        if _o.environ.get('SB') and E not in SHORTE:          # stress budget: loss if a 10-Oct-2025-style crash hit right now
             ex = EXPO_FN() if EXPO_FN is not None else {}
             cur = sum(CRASH(k) * v for k, v in ex.items() if v > 0)
             for q in self.trades.values():
-                if q.status in ('pending', 'open') and q.E != 'E3':
+                if q.status in ('pending', 'open') and q.E not in SHORTE:
                     unf = 1.0 if q.status == 'pending' or EXPO_FN is None else sum(lv['w'] for lv in q.levels if lv.get('fp') is None)
                     cur += CRASH(q.coin) * q.nt * unf
             nt = min(nt, max(0.0, (float(_o.environ['SB']) * eq - cur) / CRASH(c)))

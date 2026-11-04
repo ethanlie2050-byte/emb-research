@@ -33,6 +33,10 @@ def compute(D):
     for c in ALL13:
         f = F['1h'][c]
         raw[('E2', c)] = ((f.z <= -1.5) & (f.areg >= E2A))
+        if _os.environ.get('SH2'):      # research: E2 slot becomes a rip-short engine: z >= +Z and areg >= A (use ENGP=E2.s:-1)
+            _z, _a = (float(v) for v in _os.environ['SH2'].split('/'))
+            with np.errstate(invalid='ignore'):
+                raw[('E2', c)] = ((f.z >= _z) & (f.areg >= _a))
         raw[('E3', c)] = ((f.ret7d <= E3R) & (f.z >= 1.5) & (f.areg >= 1.5))
         zz = f.zz.values
         with np.errstate(invalid='ignore'):
@@ -53,7 +57,7 @@ def compute(D):
             f = F[tf][c]
             n = len(d)
             sig = raw[(E, c)].fillna(False).astype(bool).values
-            if E in ('E1', 'E2', 'E5'):
+            if E in ('E1', 'E2', 'E5') and not (E == 'E2' and _os.environ.get('SH2')):
                 q = qok(f, 'E2' if E == 'E2' else 'E1', QTHR.get(E, 2.0)).values
                 cok = np.ones(n, bool) if c in ('BTC', 'ETH') else ~crash[E][c].values
                 gnext = np.asarray(q & cok, bool)                 # gate of the NEXT bar (known at this close)
