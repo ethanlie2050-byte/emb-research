@@ -16,6 +16,9 @@ PEN = 0.002   # v2.4: = research PEN of v2.3 (engine state now matches the backt
 import os
 E5Z = 1.95   # v3.1: E5 dip depth 1.95 (was 2.0)
 E3R = -0.055; RB1S = 0.6; RB1H = 168   # v3.0: RB1 max hold 168 x 15m (was 192); v2.10: E3 needs a 5.5% 7-day drop (was 6.5%); v2.6: RB1 stop 0.6 (was 0.75)
+import os as _os0
+if _os0.environ.get('RB1S'): RB1S = float(_os0.environ['RB1S'])   # research: RB1 stop
+if _os0.environ.get('RB1H'): RB1H = int(float(_os0.environ['RB1H']))   # research: RB1 max hold
 E4STOP = 8.0  # Addendum 2
 DUR = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
 BPD = {'15m': 96, '1h': 24}

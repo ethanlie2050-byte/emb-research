@@ -72,7 +72,7 @@ def compute(D):
     m = D['m15']['BTC']
     s1 = rb1_signal(m, D['h1']['BTC'], D['btc4'])
     S[('RB1', 'BTC')] = pd.DataFrame(dict(open=m.open.values, high=m.high.values, low=m.low.values,
-                                          close=m.close.values, sig=s1, dist=0.03 * m.close.values), index=m.index)
+                                          close=m.close.values, sig=s1, dist=float(_os.environ.get('RB1D', 0.03)) * m.close.values), index=m.index)
     s5, atr4 = rb5_signal(D['btc4'], m)
     b = D['btc4']
     S[('RB5', 'BTC')] = pd.DataFrame(dict(open=b.open.values, high=b.high.values, low=b.low.values,
