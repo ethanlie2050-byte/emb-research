@@ -36,6 +36,9 @@ CFG = dict(
     # v3.2 (2026-10-15): euphoria engine - short BTC/ETH 0.5 each for 24h after 5+ altcoins jump 15%+ (breadth.py, dualbook.py)
     # v3.3 (2026-10-15): altcoin trend add-on breakout 30 bars (was 20), size cap 2.0 (was 1.5) (addon.py)
 )
+for _kv in __import__('os').environ.get('CFGO', '').split(','):   # research: override numeric settings, e.g. CFGO=kd:26,wcore:0.3
+    if _kv:
+        _k, _v = _kv.split(':'); CFG[_k] = float(_v)
 
 
 class Trade:
