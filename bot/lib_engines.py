@@ -291,6 +291,9 @@ ENG = {
 }
 
 import os as _os
+for _kv in _os.environ.get('ENGC', '').split(';'):       # research: restrict an engine's coins, e.g. ENGC=E5=ETH;E1=BTC/ETH
+    if _kv:
+        _e, _cs = _kv.split('='); ENG[_e]['coins'] = [c for c in ENG[_e]['coins'] if c in _cs.split('/')]
 for _kv in _os.environ.get('ENGP', '').split(','):       # research: override engine settings, e.g. ENGP=E1.tp:3.75,E5.H:60
     if _kv:
         _k, _v = _kv.split(':'); _e, _p = _k.split('.')

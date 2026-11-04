@@ -128,5 +128,6 @@ def core_position_bear(L, sw=1.0, wins=(120, 300, 600, 900), vt=0.4, h=0.1):
     e[above == 0] = -sw
     vol = c.pct_change().rolling(180).std() * np.sqrt(6 * 365)
     raw = e * np.minimum(vt / vol, 1.0)
+    if _os.environ.get('COREH'): h = float(_os.environ['COREH'])   # research: core rebalance hysteresis
     return raw.where((raw - raw.shift(1)).abs() > h * raw.shift(1).abs()).ffill()
 
