@@ -234,6 +234,12 @@ class Bot:
             used = sum(q.nt * 6 * q.atrp for q in self.open_trades() if q.E == 'E3')
             nt = min(nt, (self.cfg['e3tot'] * eq - used) / (6 * atrp))
         import os as _o
+        if _o.environ.get('BEARX') and E != 'E3' and bool(self.reg.get(t_bar.normalize(), False)):
+            nt *= float(_o.environ['BEARX'])                                     # research: shrink longs in a bear regime
+        if _o.environ.get('DDT'):                                               # research: equity-drawdown brake x/y
+            _x, _y = (float(v) for v in _o.environ['DDT'].split('/'))
+            self._pk = max(getattr(self, '_pk', eq), eq)
+            if eq < self._pk * (1 - _x): nt *= _y
         if _o.environ.get('CAP'): nt = min(nt, float(_o.environ['CAP']) * eq)   # research: per-trade size limit
         if _o.environ.get('CAPALT') and c not in ('BTC', 'ETH'): nt = min(nt, float(_o.environ['CAPALT']) * eq)   # research: smaller limit for altcoins
         if _o.environ.get('VR') and c in VOLS:                                    # research: volatility limit

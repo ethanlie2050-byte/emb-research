@@ -294,7 +294,7 @@ import os as _os
 for _kv in _os.environ.get('ENGP', '').split(','):       # research: override engine settings, e.g. ENGP=E1.tp:3.75,E5.H:60
     if _kv:
         _k, _v = _kv.split(':'); _e, _p = _k.split('.')
-        ENG[_e][_p] = type(ENG[_e][_p])(float(_v)) if not isinstance(ENG[_e][_p], list) else ENG[_e][_p]
+        ENG[_e][_p] = type(ENG[_e][_p])(float(_v)) if not isinstance(ENG[_e][_p], list) else [float(x) for x in _v.split('/')]
 
 
 def build(D=None):
