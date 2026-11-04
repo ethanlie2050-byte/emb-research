@@ -234,6 +234,7 @@ class Bot:
             used = sum(q.nt * 6 * q.atrp for q in self.open_trades() if q.E == 'E3')
             nt = min(nt, (self.cfg['e3tot'] * eq - used) / (6 * atrp))
         import os as _o
+        if getattr(self, '_pause', None) is not None and t_bar < self._pause: nt = 0.0   # research: PSTOP pause
         if _o.environ.get('BEARX') and E != 'E3' and bool(self.reg.get(t_bar.normalize(), False)):
             nt *= float(_o.environ['BEARX'])                                     # research: shrink longs in a bear regime
         if _o.environ.get('DDT'):                                               # research: equity-drawdown brake x/y
@@ -331,6 +332,21 @@ class Bot:
     # ------------------------------------------------------------ main step
     def step(self, t):
         """t = time of a 15-minute boundary; all bars ending at or before t are closed."""
+        import os as _o
+        if _o.environ.get('PSTOP'):            # research: portfolio stop x/h - equity < peak*(1-x): close everything, pause h hours
+            _x, _h = (float(v) for v in _o.environ['PSTOP'].split('/'))
+            _eq = self.equity(t)
+            self._ppk = max(getattr(self, '_ppk', _eq), _eq)
+            if _eq < self._ppk * (1 - _x) and self.open_trades():
+                for q in list(self.open_trades()):
+                    sl = self.slots[(q.E, q.coin)]
+                    px = self.last_close(sl, t) * (1 - 0.0015 * q.s)      # extra 0.15% slippage on panic exit
+                    if any(lv['fp'] is not None for lv in q.levels):
+                        self.ex.market(q.coin, -q.s, None, tag=(q.id, 'time', 0))
+                    self.close_trade(q, px, t, 'pstop')
+                self._pause = t + pd.Timedelta(hours=_h)
+                self._ppk = self.equity(t)
+                self.log(t, 'pstop', eq=_eq)
         # A. time exits for bars that closed at t
         for q in list(self.open_trades()):
             sl = self.slots[(q.E, q.coin)]
