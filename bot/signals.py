@@ -34,6 +34,10 @@ def compute(D):
     F1 = {c: indicators(M1[c], E1TF, int(_os.environ.get('E1ZW', 20)), int(_os.environ.get('E1ATRN', 14)),
                         int(_os.environ.get('E1AREGN', 500))) for c in P15}
     E1AR = float(_os.environ.get('E1AR', 1.8))
+    # research: E2 as a 1h dip engine with its own indicator lengths (E2ZW, E2ATRN, E2AREGN, E2Z, E2AR, QE2, E2QT)
+    F2 = {c: indicators(D['h1'][c], '1h', int(_os.environ.get('E2ZW', 20)), int(_os.environ.get('E2ATRN', 14)),
+                        int(_os.environ.get('E2AREGN', 500))) for c in ALL13} if _os.environ.get('E2ZW') else F['1h']
+    if _os.environ.get('QE2'): QTHR['E2'] = float(_os.environ['QE2'])
     raw = {}
     for c in P15:
         f = F['15m'][c]
@@ -44,7 +48,8 @@ def compute(D):
     b3 = (btc1 / btc1.shift(72) - 1).rolling(72, min_periods=1).min()
     for c in ALL13:
         f = F['1h'][c]
-        raw[('E2', c)] = ((f.z <= -1.5) & (f.areg >= E2A))
+        with np.errstate(invalid='ignore'):
+            raw[('E2', c)] = ((F2[c].z <= -float(_os.environ.get('E2Z', 1.5))) & (F2[c].areg >= float(_os.environ.get('E2AR', E2A))))
         if _os.environ.get('SH2'):      # research: E2 slot becomes a rip-short engine: z >= +Z and areg >= A (use ENGP=E2.s:-1)
             _z, _a = (float(v) for v in _os.environ['SH2'].split('/'))
             with np.errstate(invalid='ignore'):
@@ -60,17 +65,17 @@ def compute(D):
         raw[('E4', c)] = pd.Series(r0 & ~blk, f.index)
     crash = {}
     for E, tf, coins in [('E1', '15m', P15), ('E5', '15m', P15), ('E2', '1h', ALL13)]:
-        crash[E] = crash_series({c: raw[(E, c)] for c in coins}, F1 if E == 'E1' else F[tf], coins, tf)
+        crash[E] = crash_series({c: raw[(E, c)] for c in coins}, F1 if E == 'E1' else F2 if E == 'E2' else F[tf], coins, tf)
     S = {}
     for E, p in ENG.items():
         tf = p['tf']
         for c in p['coins']:
             d = M1[c] if E == 'E1' else D['m15'][c] if tf == '15m' else D['h1'][c]
-            f = F1[c] if E == 'E1' else F[tf][c]
+            f = F1[c] if E == 'E1' else F2[c] if E == 'E2' else F[tf][c]
             n = len(d)
             sig = raw[(E, c)].fillna(False).astype(bool).values
             if E in ('E1', 'E2', 'E5') and not (E == 'E2' and _os.environ.get('SH2')):
-                q = qok(f, 'E2' if E == 'E2' else 'E1', QTHR.get(E, 2.0)).values
+                q = qok(f, 'E2' if (E == 'E2' and _os.environ.get('E2QT', 'E2') == 'E2') else 'E1', QTHR.get(E, 2.0)).values
                 cok = np.ones(n, bool) if c in ('BTC', 'ETH') else ~crash[E][c].values
                 gnext = np.asarray(q & cok, bool)                 # gate of the NEXT bar (known at this close)
                 cnext = np.asarray(crash['E5' if (E == 'E1' and E1TF == '15m') else E][c].values, bool)
