@@ -39,7 +39,7 @@ def compute(D):
         f = F['15m'][c]
         with np.errstate(invalid='ignore'):
             raw[('E1', c)] = ((F1[c].z <= -E1Z) & (F1[c].areg >= E1AR))
-            raw[('E5', c)] = ((f.z <= -E5Z) & (f.areg >= 1.0))
+            raw[('E5', c)] = ((f.z <= -E5Z) & (f.areg >= float(_os.environ.get('E5AR', 1.0))))   # research E5AR
     btc1 = D['h1']['BTC'].close
     b3 = (btc1 / btc1.shift(72) - 1).rolling(72, min_periods=1).min()
     for c in ALL13:
@@ -138,6 +138,8 @@ def core_position_bear(L, sw=1.0, wins=(120, 300, 600, 900), vt=0.4, h=0.1):
     """v2.3 core (research trend_lab.sig_sma_bear): long fraction of SMAs below the close; short sw when the
     close is below ALL of them; vol-targeted to 40%/yr; 10% relative hysteresis. Per 4h bar, known at the
     bar close, applied to the next bar."""
+    if _os.environ.get('COREW'): wins = tuple(int(x) for x in _os.environ['COREW'].split('/'))   # research: trend SMA lengths (4h bars)
+    if _os.environ.get('CORESW'): sw = float(_os.environ['CORESW'])                              # research: trend short size
     c = L.close
     above = sum((c > c.rolling(w).mean()).astype(float) for w in wins) / len(wins)
     e = above.copy()
