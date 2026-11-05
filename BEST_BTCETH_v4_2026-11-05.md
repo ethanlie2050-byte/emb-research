@@ -17,3 +17,5 @@ Env: `UNIVF=univ_top2.pkl DIS=E2,E4,E5,RB1 NOTREND=1 NOEUPH=1 QE1=1.7 QE5=1.8 CA
 
 Dropped today: E5 (old), RB1 breakout engine, bigger trend core, faster trend, disaster stops (8/12 ATR), early drawdown brakes,
 crash-time size cut, volume-spike / wait-for-green-candle entries, trend filter, time-of-day filter, more coins.
+
+Continuous unbroken run 2022-01..2026-10 (v4cont): CAGR 117%, DD -11% (intraday on 15m closes -18%), Calmar 10.8, years identical to chunked run.
