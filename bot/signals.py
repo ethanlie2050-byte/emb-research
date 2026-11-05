@@ -73,6 +73,10 @@ def compute(D):
     s1 = rb1_signal(m, D['h1']['BTC'], D['btc4'])
     S[('RB1', 'BTC')] = pd.DataFrame(dict(open=m.open.values, high=m.high.values, low=m.low.values,
                                           close=m.close.values, sig=s1, dist=float(_os.environ.get('RB1D', 0.03)) * m.close.values), index=m.index)
+    if _os.environ.get('RB1E') and 'eth4' in D:     # research: BTC breakout engine also on ETH
+        me = D['m15']['ETH']; s1e = rb1_signal(me, D['h1']['ETH'], D['eth4'])
+        S[('RB1', 'ETH')] = pd.DataFrame(dict(open=me.open.values, high=me.high.values, low=me.low.values,
+                                              close=me.close.values, sig=s1e, dist=float(_os.environ.get('RB1D', 0.03)) * float(_os.environ['RB1E']) * me.close.values), index=me.index)
     s5, atr4 = rb5_signal(D['btc4'], m)
     b = D['btc4']
     S[('RB5', 'BTC')] = pd.DataFrame(dict(open=b.open.values, high=b.high.values, low=b.low.values,

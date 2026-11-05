@@ -13,6 +13,7 @@ STEP = pd.Timedelta('15min')
 DUR = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
 EO = {e: i for i, e in enumerate(['E1', 'E2', 'E3', 'E4', 'E5', 'RB1', 'RB5'])}
 G = {'E1', 'E2', 'E5'}
+GD = set(__import__('os').environ.get('DIPG', 'E1,E2,E5').split(',')) - {''}   # research DIPG: engines limited to one open dip trade at a time
 SHORTE = {'E3'} | ({'E2'} if __import__('os').environ.get('SH2') else set())   # research: short engines skip long-exposure caps
 
 CFG = dict(
@@ -62,6 +63,7 @@ class Bot:
             for c in p['coins']:
                 self.slots[(E, c)] = Slot(E, c, S)
         self.slots[('RB1', 'BTC')] = Slot('RB1', 'BTC', S); self.slots[('RB5', 'BTC')] = Slot('RB5', 'BTC', S)
+        if ('RB1', 'ETH') in S: self.slots[('RB1', 'ETH')] = Slot('RB1', 'ETH', S)   # research RB1E
         self.trades = {}           # id -> Trade (pending/open)
         self.closed = []
         self.setup_trade = {}      # (E,coin,i) -> trade id
@@ -194,7 +196,7 @@ class Bot:
         if any(q.coin == c for q in op): return False, 'coin'
         caps = self.cfg['caps']
         if E in caps and sum(q.E == E for q in op) >= caps[E]: return False, 'cap'
-        if E in G and any(q.E in G for q in op): return False, 'dipmax'
+        if E in GD and any(q.E in GD for q in op): return False, 'dipmax'
         if E in G and c in self.lastloss and (t_bar - self.lastloss[c]) < self.cfg['cool_steps'] * STEP:
             return False, 'cooldown'
         if E == 'E3':
