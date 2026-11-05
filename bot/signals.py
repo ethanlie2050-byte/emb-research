@@ -44,6 +44,18 @@ def compute(D):
         with np.errstate(invalid='ignore'):
             raw[('E1', c)] = ((F1[c].z <= -E1Z) & (F1[c].areg >= E1AR))
             raw[('E5', c)] = ((f.z <= -E5Z) & (f.areg >= float(_os.environ.get('E5AR', 1.0))))   # research E5AR
+        if _os.environ.get('E1VOLX') or _os.environ.get('E1CONF') or _os.environ.get('E1TREND'):   # research: E1 entry filters
+            r = raw[('E1', c)].fillna(False).astype(bool); m1 = M1[c]
+            if _os.environ.get('E1TREND') == 'r30up': r = r & (F1[c].ret30d > 0)
+            if _os.environ.get('E1TREND') == 'up': r = r & (F1[c].ma200d > 0)
+            if _os.environ.get('E1VOLX'):
+                with np.errstate(invalid='ignore'):
+                    r = r & ((m1.volume / m1.volume.rolling(20).mean().shift(1)) >= float(_os.environ['E1VOLX']))
+            K = int(_os.environ.get('E1CONF', 0))
+            if K > 0:
+                rec = r.astype(float).rolling(K, min_periods=1).max().shift(1).fillna(0).astype(bool)
+                r = rec & (m1.close > m1.open) & (m1.close > m1.close.shift(1))
+            raw[('E1', c)] = r
     btc1 = D['h1']['BTC'].close
     b3 = (btc1 / btc1.shift(72) - 1).rolling(72, min_periods=1).min()
     for c in ALL13:
