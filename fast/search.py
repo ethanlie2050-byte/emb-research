@@ -8,6 +8,7 @@ FRS = [(.25, .25, .5), (.33, .33, .34), (.5, .25, .25), (.2, .3, .5), (.1, .3, .
 
 def draw(r):
     if ENG == 'E1n': return draw_n(r)
+    if ENG == 'E1x': return draw_x(r)
     tf = r.choice(['15m', '15m', '30m', '1h'] if ENG == 'E1' else ['15m', '30m', '1h', '1h', '4h'])
     P = dict(tf=tf, zw=r.choice([10, 14, 20, 30, 48]), atrn=r.choice([7, 14, 28]), aregn=r.choice([250, 500, 1000]))
     k = r.choice([1, 2, 3, 3, 3])
@@ -37,6 +38,18 @@ def draw_n(r):
              H=max(2, int(hold_h * BPD[tf] / 24)), hold_h=hold_h,
              st=0.0 if r.random() < 0.8 else round(lv[-1] + r.uniform(4, 10), 2),
              s=1, z=round(r.uniform(1.0, 2.6), 2), ar=round(r.uniform(1.5, 2.8), 2), q=r.choice([1.9, 2.1, 2.3, 2.5, 2.7]))
+    return P
+
+
+def draw_x(r):
+    P = draw_n(r)
+    P['tf'] = r.choice(['15m', '30m', '30m', '1h']); P['H'] = max(2, int(P['hold_h'] * BPD[P['tf']] / 24))
+    P['trend'] = r.choice([None, None, 'up', 'down', 'r30up'])
+    P['volx'] = r.choice([0, 0, 1.5, 2.0, 3.0])
+    P['conf'] = r.choice([0, 0, 2, 4, 8])
+    if P['conf'] > 0 and r.random() < 0.5: P['lv'] = [round(r.uniform(0, 1), 2)]; P['fr'] = [1.0]
+    P['q'] = r.choice([0, 1.5, 1.9, 2.1, 2.3])
+    P['z'] = round(r.uniform(0.8, 2.6), 2); P['ar'] = round(r.uniform(1.0, 2.8), 2)
     return P
 
 

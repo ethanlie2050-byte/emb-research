@@ -129,6 +129,20 @@ def trades(P, D=None, F=None, tf='15m', cost=1.0, G=None):
             else:
                 sig = (f.ret7d <= P['r7']) & (f.z >= P['z']) & (f.areg >= P['ar'])
         sig = sig.fillna(False).values
+        # research extras: trend filter, volume spike, reversal confirmation
+        tfil = P.get('trend')
+        if tfil == 'up': sig = sig & (f.ma200d.values > 0)
+        elif tfil == 'down': sig = sig & (f.ma200d.values < 0)
+        elif tfil == 'r30up': sig = sig & (f.ret30d.values > 0)
+        if P.get('volx', 0) > 0:
+            vx = (d.volume / d.volume.rolling(20).mean().shift(1)).values
+            with np.errstate(invalid='ignore'): sig = sig & (vx >= P['volx'])
+        K = int(P.get('conf', 0))
+        if K > 0:
+            cl = d.close.values; op = d.open.values
+            recent = pd.Series(sig).rolling(K, min_periods=1).max().shift(1).fillna(0).values.astype(bool)
+            with np.errstate(invalid='ignore'):
+                sig = recent & (cl > op) & (cl > np.r_[np.nan, cl[:-1]])
         if G is not None and c in G:
             gate = G[c]
         elif P.get('q', 0) > 0:
