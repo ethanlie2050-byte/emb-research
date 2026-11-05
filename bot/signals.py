@@ -100,6 +100,10 @@ def compute(D):
                                           cf=cf, tgt=tgt, gnext=gnext, cnext=cnext), index=d.index)
     m = D['m15']['BTC']
     s1 = rb1_signal(m, D['h1']['BTC'], D['btc4'])
+    if _os.environ.get('RB1TREND'):            # research: breakout engine only when BTC is above its N-day average (known next day)
+        _n = int(_os.environ['RB1TREND']); _cd = m.close.resample('1D').last().dropna()
+        _up = (_cd > _cd.rolling(_n).mean()); _up.index = _up.index + pd.Timedelta('1D')
+        s1 = s1 & _up.reindex(m.index, method='ffill').fillna(False).values.astype(bool)
     S[('RB1', 'BTC')] = pd.DataFrame(dict(open=m.open.values, high=m.high.values, low=m.low.values,
                                           close=m.close.values, sig=s1, dist=float(_os.environ.get('RB1D', 0.03)) * m.close.values), index=m.index)
     if _os.environ.get('RB1E') and 'eth4' in D:     # research: BTC breakout engine also on ETH
@@ -135,6 +139,8 @@ def adv_series(D, W=20):
 
 
 def vt_series(D, VT=0.60, W=30, FLOOR=0.3):
+    if _os.environ.get('VTT'): VT = float(_os.environ['VTT'])      # research: volatility target for engine sizes
+    if _os.environ.get('VTF'): FLOOR = float(_os.environ['VTF'])
     cd = D['m15']['BTC'].close.resample('1D').last().dropna()
     vol = cd.pct_change().rolling(W).std(ddof=1) * np.sqrt(365)
     vol.index = vol.index + pd.Timedelta('1D')
