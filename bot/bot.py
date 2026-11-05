@@ -256,6 +256,7 @@ class Bot:
             for q in self.trades.values():
                 if q.coin == c and q.E not in SHORTE and q.status in ('pending', 'open'):
                     have += q.nt * (1.0 if q.status == 'pending' or EXPO_FN is None else sum(lv['w'] for lv in q.levels if lv.get('fp') is None))
+            if c == 'ETH' and _o.environ.get('PCAPE'): pm = float(_o.environ['PCAPE'])   # research: separate ETH total limit
             nt = min(nt, max(0.0, (pm if c in ('BTC', 'ETH') else pa) * eq - have))
         if _o.environ.get('TCAP') and E not in SHORTE:        # research: total long exposure (all coins, all engines) limit
             ex = EXPO_FN() if EXPO_FN is not None else {}
