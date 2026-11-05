@@ -13,9 +13,9 @@ T0, T1, TS = pd.Timestamp('2022-01-01'), pd.Timestamp('2026-10-31 23:45'), pd.Ti
 HB = pd.date_range('2022-01-01', '2027-01-01', freq='6MS')
 
 
-def load(tf='15m'):
+def load(tf='15m', coins=('BTC', 'ETH')):
     D = {}
-    for c in ('BTC', 'ETH'):
+    for c in coins:
         d = pd.read_parquet(os.path.join(ROOT, 'data', f'{c}.parquet')).astype('float64')[['open', 'high', 'low', 'close', 'volume']]
         d = d[d.volume != 0]
         if tf != '15m':
