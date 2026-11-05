@@ -207,7 +207,7 @@ def _fmt(x, step):
     return f'{x:.{places}f}'
 
 
-DUR = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
+DUR = {'15m': pd.Timedelta('15min'), '30m': pd.Timedelta('30min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
 
 
 class BybitExchange:

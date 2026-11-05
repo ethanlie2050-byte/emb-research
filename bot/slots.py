@@ -48,7 +48,7 @@ class Slot:
         if j < len(self.idx):
             return int(j) if self.idx[j] == t else None
         import pandas as pd
-        dur = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}[self.tf]
+        dur = {'15m': pd.Timedelta('15min'), '30m': pd.Timedelta('30min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}[self.tf]
         return int(j) if t == self.idx[-1] + dur else None
 
     def gate_at(self, j):

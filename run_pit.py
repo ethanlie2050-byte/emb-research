@@ -43,7 +43,7 @@ _IDX={k:v.index for k,v in Sfull.items()}
 def fast_compute(Dt):
     t=CUR['t']; out={}
     for k,v in Sfull.items():
-        dur=pd.Timedelta({'E1':'15min','E5':'15min','RB1':'15min','RB5':'4h'}.get(k[0],'1h'))
+        dur=pd.Timedelta({'E1':{'30m':'30min'}.get(os.environ.get('E1TF',''),'15min'),'E5':'15min','RB1':'15min','RB5':'4h'}.get(k[0],'1h'))
         n=_IDX[k].searchsorted(t-dur,'right')
         out[k]=_Lazy(v,n) if os.environ.get('LAZY','1')=='1' else v.iloc[:n]
     return out

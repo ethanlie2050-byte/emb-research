@@ -20,18 +20,18 @@ import os as _os0
 if _os0.environ.get('RB1S'): RB1S = float(_os0.environ['RB1S'])   # research: RB1 stop
 if _os0.environ.get('RB1H'): RB1H = int(float(_os0.environ['RB1H']))   # research: RB1 max hold
 E4STOP = 8.0  # Addendum 2
-DUR = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
-BPD = {'15m': 96, '1h': 24}
-BPH = {'15m': 4, '1h': 1}
+DUR = {'15m': pd.Timedelta('15min'), '30m': pd.Timedelta('30min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
+BPD = {'15m': 96, '30m': 48, '1h': 24}
+BPH = {'15m': 4, '30m': 2, '1h': 1}
 
 
-def indicators(d, tf):
+def indicators(d, tf, zw=20, atrn=14, aregn=500):
     o, h, l, c = d.open, d.high, d.low, d.close
     pc = c.shift(1)
     tr = pd.concat([h - l, (h - pc).abs(), (l - pc).abs()], axis=1).max(axis=1)
-    atr = tr.rolling(14).mean()
-    z = (c - c.rolling(20).mean()) / c.rolling(20).std()
-    areg = atr / atr.rolling(500, min_periods=100).mean()
+    atr = tr.rolling(atrn).mean()
+    z = (c - c.rolling(zw).mean()) / c.rolling(zw).std()
+    areg = atr / atr.rolling(aregn, min_periods=min(100, aregn)).mean()
     bpd, bph = BPD[tf], BPH[tf]
     f = pd.DataFrame(index=d.index)
     f['atr'] = atr; f['z'] = z; f['areg'] = areg
@@ -294,6 +294,7 @@ ENG = {
 }
 
 import os as _os
+if _os.environ.get('E1TF'): ENG['E1']['tf'] = _os.environ['E1TF']      # research: E1 candle size (15m / 30m)
 for _kv in _os.environ.get('ENGC', '').split(';'):       # research: restrict an engine's coins, e.g. ENGC=E5=ETH;E1=BTC/ETH
     if _kv:
         _e, _cs = _kv.split('='); ENG[_e]['coins'] = [c for c in ENG[_e]['coins'] if c in _cs.split('/')]

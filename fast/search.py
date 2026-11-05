@@ -7,6 +7,7 @@ FRS = [(.25, .25, .5), (.33, .33, .34), (.5, .25, .25), (.2, .3, .5), (.1, .3, .
 
 
 def draw(r):
+    if ENG == 'E1n': return draw_n(r)
     tf = r.choice(['15m', '15m', '30m', '1h'] if ENG == 'E1' else ['15m', '30m', '1h', '1h', '4h'])
     P = dict(tf=tf, zw=r.choice([10, 14, 20, 30, 48]), atrn=r.choice([7, 14, 28]), aregn=r.choice([250, 500, 1000]))
     k = r.choice([1, 2, 3, 3, 3])
@@ -24,6 +25,18 @@ def draw(r):
                  q=r.choice([0, 0, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3]))
     else:
         P.update(s=-1, z=round(r.uniform(0.8, 2.5), 2), ar=round(r.uniform(0.8, 2.2), 2), r7=round(r.uniform(-0.15, -0.03), 3), q=0)
+    return P
+
+
+def draw_n(r):
+    tf = r.choice(['30m', '1h', '1h', '2h'])
+    P = dict(tf=tf, zw=r.choice([10, 14, 20, 30]), atrn=r.choice([14, 28, 48]), aregn=r.choice([1000, 2000]))
+    l1 = r.uniform(1, 3); lv = [l1, l1 + r.uniform(0.5, 3.5)]; lv.append(lv[-1] + r.uniform(0.5, 4))
+    hold_h = r.choice([24, 48, 96])
+    P.update(lv=[round(x, 2) for x in lv], fr=list(r.choice(FRS)), Wn=r.choice([1, 2, 4]), tp=round(r.uniform(2, 5), 2),
+             H=max(2, int(hold_h * BPD[tf] / 24)), hold_h=hold_h,
+             st=0.0 if r.random() < 0.8 else round(lv[-1] + r.uniform(4, 10), 2),
+             s=1, z=round(r.uniform(1.0, 2.6), 2), ar=round(r.uniform(1.5, 2.8), 2), q=r.choice([1.9, 2.1, 2.3, 2.5, 2.7]))
     return P
 
 
@@ -46,7 +59,7 @@ def run(args):
         G = _G[gk]
     try:
         T = trades(P, _D[tf], _F[fk], tf, G=G)
-        S = 2.5 if ENG == 'E1' else 1.5
+        S = 1.5 if ENG == 'E3' else 2.5
         o = stats(T, S)
         if o is None: return None
         T2 = trades(P, _D[tf], _F[fk], tf, cost=2.0, G=G); o2 = stats(T2, S)

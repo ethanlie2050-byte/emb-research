@@ -10,7 +10,7 @@ from lib_engines import ENG
 from slots import Slot
 
 STEP = pd.Timedelta('15min')
-DUR = {'15m': pd.Timedelta('15min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
+DUR = {'15m': pd.Timedelta('15min'), '30m': pd.Timedelta('30min'), '1h': pd.Timedelta('1h'), '4h': pd.Timedelta('4h')}
 EO = {e: i for i, e in enumerate(['E1', 'E2', 'E3', 'E4', 'E5', 'RB1', 'RB5'])}
 G = {'E1', 'E2', 'E5'}
 GD = set(__import__('os').environ.get('DIPG', 'E1,E2,E5').split(',')) - {''}   # research DIPG: engines limited to one open dip trade at a time

@@ -5,6 +5,12 @@ import numpy as np, pandas as pd
 from lib_engines import (indicators, qok, crash_series, shift1, rb1_signal, rb5_signal, ENG, E3R, QTHR, E5Z)
 from lib_data import P15, X1H, ALL13
 
+
+def _resample(d, tf):
+    r = d.resample({'30m': '30min', '1h': '1h'}[tf], label='left', closed='left').agg(
+        {'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'volume': 'sum'}).dropna()
+    return r[r.volume != 0]
+
 E2A = 1.6
 E1Z = 1.75          # v2.3 (was 2.0)
 import os as _os                                   # research overrides (unset = normal settings)
@@ -22,11 +28,17 @@ def compute(D):
        S[('RB1','BTC')], S[('RB5','BTC')] = DataFrame(open high low close sig dist)"""
     F = {'15m': {c: indicators(D['m15'][c], '15m') for c in P15},
          '1h': {c: indicators(D['h1'][c], '1h') for c in ALL13}}
+    # research: E1 on its own candle size / indicator lengths (E1TF, E1ZW, E1ATRN, E1AREGN, E1AR); defaults = v3.4
+    E1TF = _os.environ.get('E1TF', '15m')
+    M1 = D['m15'] if E1TF == '15m' else {c: _resample(D['m15'][c], E1TF) for c in P15}
+    F1 = {c: indicators(M1[c], E1TF, int(_os.environ.get('E1ZW', 20)), int(_os.environ.get('E1ATRN', 14)),
+                        int(_os.environ.get('E1AREGN', 500))) for c in P15}
+    E1AR = float(_os.environ.get('E1AR', 1.8))
     raw = {}
     for c in P15:
         f = F['15m'][c]
         with np.errstate(invalid='ignore'):
-            raw[('E1', c)] = ((f.z <= -E1Z) & (f.areg >= 1.8))
+            raw[('E1', c)] = ((F1[c].z <= -E1Z) & (F1[c].areg >= E1AR))
             raw[('E5', c)] = ((f.z <= -E5Z) & (f.areg >= 1.0))
     btc1 = D['h1']['BTC'].close
     b3 = (btc1 / btc1.shift(72) - 1).rolling(72, min_periods=1).min()
@@ -48,20 +60,20 @@ def compute(D):
         raw[('E4', c)] = pd.Series(r0 & ~blk, f.index)
     crash = {}
     for E, tf, coins in [('E1', '15m', P15), ('E5', '15m', P15), ('E2', '1h', ALL13)]:
-        crash[E] = crash_series({c: raw[(E, c)] for c in coins}, F[tf], coins, tf)
+        crash[E] = crash_series({c: raw[(E, c)] for c in coins}, F1 if E == 'E1' else F[tf], coins, tf)
     S = {}
     for E, p in ENG.items():
         tf = p['tf']
         for c in p['coins']:
-            d = D['m15'][c] if tf == '15m' else D['h1'][c]
-            f = F[tf][c]
+            d = M1[c] if E == 'E1' else D['m15'][c] if tf == '15m' else D['h1'][c]
+            f = F1[c] if E == 'E1' else F[tf][c]
             n = len(d)
             sig = raw[(E, c)].fillna(False).astype(bool).values
             if E in ('E1', 'E2', 'E5') and not (E == 'E2' and _os.environ.get('SH2')):
                 q = qok(f, 'E2' if E == 'E2' else 'E1', QTHR.get(E, 2.0)).values
                 cok = np.ones(n, bool) if c in ('BTC', 'ETH') else ~crash[E][c].values
                 gnext = np.asarray(q & cok, bool)                 # gate of the NEXT bar (known at this close)
-                cnext = np.asarray(crash['E5' if E == 'E1' else E][c].values, bool)
+                cnext = np.asarray(crash['E5' if (E == 'E1' and E1TF == '15m') else E][c].values, bool)
                 gate = shift1(gnext); cf = shift1(cnext)
             else:
                 gate = np.ones(n, bool); cf = np.zeros(n, bool); gnext = gate; cnext = cf
